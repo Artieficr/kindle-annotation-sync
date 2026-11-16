@@ -1,0 +1,6 @@
+__pycache__/
+*.zip
+
+# Private notes, symlinked from private-docs
+CLAUDE.md
+.claude/

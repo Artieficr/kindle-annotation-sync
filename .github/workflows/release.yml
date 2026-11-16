@@ -1,0 +1,28 @@
+# Push a tag like v0.2.0 -> a GitHub release with the installable plugin zip attached.
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check tag matches plugin version
+        run: |
+          version=$(grep -oP '^\s*version = \(\K[0-9, ]+' plugin/__init__.py | tr -d ' ' | tr , .)
+          [ "v$version" = "$GITHUB_REF_NAME" ] || { echo "Tag $GITHUB_REF_NAME != plugin version $version"; exit 1; }
+
+      - name: Build plugin zip
+        run: cd plugin && zip -r "../kindle-annotation-sync-$GITHUB_REF_NAME.zip" . -x '__pycache__/*'
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" kindle-annotation-sync-*.zip --generate-notes
